@@ -22,10 +22,10 @@ import { SettingsPrivacyView } from './views/SettingsPrivacyView';
 import { LoginView } from './views/LoginView';
 
 const MainContent: React.FC = () => {
-  const { activeTab, currentUser } = useRelief();
+  const { activeTab, currentUser, isAuthenticated, isMfaVerified } = useRelief();
 
-  // If user is not authenticated, render auth views
-  if (!currentUser) {
+  // If user is not authenticated or MFA is pending, render Login / MFA view
+  if (!isAuthenticated || !isMfaVerified || !currentUser) {
     return <LoginView />;
   }
 

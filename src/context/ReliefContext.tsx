@@ -170,7 +170,8 @@ export const ReliefProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (foundWorker) {
       setCurrentUser(foundWorker);
       setIsAuthenticated(true);
-      setIsMfaVerified(false); // Move to MFA screen
+      setIsMfaVerified(false); // Move to MFA OTP verification step
+      showToast('info', 'MFA Required', `Verification OTP code sent to ${foundWorker.email}. Demo code: 123456`);
       return true;
     }
     return false;
@@ -190,6 +191,7 @@ export const ReliefProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const logout = () => {
     setIsAuthenticated(false);
     setIsMfaVerified(false);
+    setCurrentUser(null);
     showToast('info', 'Logged Out', 'Your session has been securely ended.');
   };
 
