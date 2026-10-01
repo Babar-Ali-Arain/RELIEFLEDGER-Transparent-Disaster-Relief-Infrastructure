@@ -13,14 +13,16 @@ import {
   CheckCircle2, 
   AlertCircle,
   Sparkles,
-  HeartHandshake
+  HeartHandshake,
+  Download
 } from 'lucide-react';
 import { useRelief } from '../context/ReliefContext';
 import { Household, VulnerabilityCategory } from '../types';
 import { QRModal } from '../components/QRModal';
+import { exportHouseholdsToCSV } from '../utils/csvExport';
 
 export const HouseholdsView: React.FC = () => {
-  const { households, setActiveTab, setSelectedReliefId, transactions } = useRelief();
+  const { households, setActiveTab, setSelectedReliefId, transactions, showToast } = useRelief();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVulnerability, setSelectedVulnerability] = useState<string>('ALL');
@@ -95,6 +97,15 @@ export const HouseholdsView: React.FC = () => {
     return `${newest.aidType} (${newest.date})`;
   };
 
+  const handleExportCSV = () => {
+    exportHouseholdsToCSV(filteredHouseholds);
+    showToast(
+      'success',
+      'CSV Export Downloaded',
+      `Successfully exported ${filteredHouseholds.length} household records to CSV for external reporting.`
+    );
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       
@@ -112,12 +123,22 @@ export const HouseholdsView: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setActiveTab('register')}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors shrink-0"
-        >
-          <UserPlus className="w-4 h-4" /> + REGISTER HOUSEHOLD
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors border border-slate-700"
+            title="Export current filtered view to CSV file"
+          >
+            <Download className="w-4 h-4 text-emerald-400" /> EXPORT CSV ({filteredHouseholds.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('register')}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors"
+          >
+            <UserPlus className="w-4 h-4" /> + REGISTER HOUSEHOLD
+          </button>
+        </div>
       </div>
 
       {/* Advanced Filter Control Station */}

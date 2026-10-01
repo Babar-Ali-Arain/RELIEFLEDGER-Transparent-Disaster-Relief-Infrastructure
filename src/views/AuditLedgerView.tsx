@@ -8,10 +8,12 @@ import {
   Lock, 
   FileCode, 
   AlertOctagon, 
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { useRelief } from '../context/ReliefContext';
 import { AidTransaction } from '../types';
+import { exportAuditLedgerToCSV } from '../utils/csvExport';
 
 export const AuditLedgerView: React.FC = () => {
   const { 
@@ -19,7 +21,8 @@ export const AuditLedgerView: React.FC = () => {
     verifyLedgerChain, 
     tamperTxDemo, 
     auditLogs,
-    resetDemoData
+    resetDemoData,
+    showToast
   } = useRelief();
 
   const [searchFilter, setSearchFilter] = useState('');
@@ -59,6 +62,15 @@ export const AuditLedgerView: React.FC = () => {
     t.aidType.toLowerCase().includes(searchFilter.toLowerCase())
   );
 
+  const handleExportCSV = () => {
+    exportAuditLedgerToCSV(filteredTransactions);
+    showToast(
+      'success',
+      'Ledger CSV Export Downloaded',
+      `Successfully exported ${filteredTransactions.length} cryptographic audit ledger transactions to CSV.`
+    );
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Title */}
@@ -75,7 +87,15 @@ export const AuditLedgerView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors border border-slate-700"
+            title="Export current ledger blocks to CSV file"
+          >
+            <Download className="w-4 h-4 text-emerald-400" /> EXPORT LEDGER CSV ({filteredTransactions.length})
+          </button>
+
           <button
             onClick={handleRunVerification}
             disabled={isVerifying}
