@@ -70,6 +70,15 @@ class ReliefService {
       const storedWorkers = localStorage.getItem(STORAGE_KEYS.WORKERS);
       if (storedWorkers) {
         this.workers = JSON.parse(storedWorkers);
+        // Sync worker names with latest configuration (e.g., Babar Ali Arain & Nazar Ali Mazari)
+        this.workers = this.workers.map(w => {
+          const fresh = INITIAL_WORKERS.find(iw => iw.id === w.id);
+          if (fresh) {
+            return { ...w, name: fresh.name, role: fresh.role, email: fresh.email };
+          }
+          return w;
+        });
+        this.persist(STORAGE_KEYS.WORKERS, this.workers);
       } else {
         this.workers = [...INITIAL_WORKERS];
         this.persist(STORAGE_KEYS.WORKERS, this.workers);

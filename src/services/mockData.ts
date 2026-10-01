@@ -51,7 +51,7 @@ export const INITIAL_WORKERS: Worker[] = [
   {
     id: 'wrk-102',
     workerCode: 'FW-1029',
-    name: 'Captain Asif Khan',
+    name: 'Babar Ali Arain',
     email: 'admin@reliefledger.org',
     organizationId: 'org-gov-02',
     organizationName: 'Government Emergency Response',
@@ -63,7 +63,7 @@ export const INITIAL_WORKERS: Worker[] = [
   {
     id: 'wrk-103',
     workerCode: 'FW-1030',
-    name: 'Mariam Rashid',
+    name: 'Nazar Ali Mazari',
     email: 'manager@reliefledger.org',
     organizationId: 'org-hh-01',
     organizationName: 'Helping Hands NGO',
@@ -190,7 +190,7 @@ export const INITIAL_TRANSACTIONS: AidTransaction[] = [
     organizationId: 'org-gov-02',
     organizationName: 'Government Emergency Response',
     workerId: 'wrk-102',
-    workerName: 'Captain Asif Khan',
+    workerName: 'Babar Ali Arain',
     aidType: 'Tent',
     quantity: '1x Emergency Shelter Tent (6-Person)',
     date: '2026-09-25',
