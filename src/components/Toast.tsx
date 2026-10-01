@@ -22,7 +22,7 @@ export const ToastNotification: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-md w-full px-4 animate-in fade-in slide-in-from-bottom-5 duration-200">
+    <div className="fixed bottom-5 right-5 z-50 max-w-md w-full px-4 animate-fade-in">
       <div className={`p-4 rounded-xl border shadow-lg flex items-start justify-between gap-3 ${bgColors[toast.type]}`}>
         <div className="flex items-start gap-3">
           {icons[toast.type]}
