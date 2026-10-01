@@ -36,8 +36,8 @@ export const Header: React.FC = () => {
   const currentHeaderInfo = titles[activeTab] || { title: 'RELIEFLEDGER', desc: 'Transparent disaster relief infrastructure.' };
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs w-full">
-      <div className="px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 max-w-full overflow-hidden">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs w-full shrink-0">
+      <div className="px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4 max-w-full relative">
         
         {/* Left: Mobile Menu Toggle & Title */}
         <div className="flex items-center gap-2 min-w-0">
@@ -86,7 +86,7 @@ export const Header: React.FC = () => {
             )}
           </button>
 
-          {/* Active Worker Profile Dropdown */}
+          {/* Active Worker Profile Dropdown Container */}
           <div className="relative shrink-0">
             <button
               onClick={() => setIsWorkerMenuOpen(!isWorkerMenuOpen)}
@@ -106,16 +106,24 @@ export const Header: React.FC = () => {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </button>
 
+            {/* Click Outside Overlay Backdrop */}
+            {isWorkerMenuOpen && (
+              <div 
+                className="fixed inset-0 z-40 bg-transparent" 
+                onClick={() => setIsWorkerMenuOpen(false)} 
+              />
+            )}
+
             {/* Worker Identity Switcher Menu */}
             {isWorkerMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     Role & Identity Switcher
                   </p>
                 </div>
 
-                <div className="max-h-64 overflow-y-auto py-1">
+                <div className="max-h-64 overflow-y-auto py-1 custom-scrollbar">
                   {workers.map((worker) => (
                     <button
                       key={worker.id}
@@ -123,8 +131,8 @@ export const Header: React.FC = () => {
                         setCurrentUser(worker);
                         setIsWorkerMenuOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-start gap-2.5 transition-colors ${
-                        currentUser?.id === worker.id ? 'bg-emerald-50/70 border-l-2 border-emerald-600' : ''
+                      className={`w-full text-left px-3 py-2.5 hover:bg-slate-50 flex items-start gap-2.5 transition-colors ${
+                        currentUser?.id === worker.id ? 'bg-emerald-50/80 border-l-3 border-emerald-600' : ''
                       }`}
                     >
                       <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -132,7 +140,7 @@ export const Header: React.FC = () => {
                         <div className="text-xs font-black text-slate-900 leading-tight truncate">
                           {worker.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 font-bold leading-tight">
+                        <div className="text-[10px] text-slate-500 font-extrabold leading-tight">
                           {worker.role} · {worker.organizationName}
                         </div>
                       </div>
@@ -142,8 +150,11 @@ export const Header: React.FC = () => {
 
                 <div className="p-2 border-t border-slate-100 text-center">
                   <button
-                    onClick={logout}
-                    className="w-full py-1.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-bold rounded-lg transition-colors"
+                    onClick={() => {
+                      setIsWorkerMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full py-2 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 font-black rounded-xl transition-colors"
                   >
                     Sign Out
                   </button>
