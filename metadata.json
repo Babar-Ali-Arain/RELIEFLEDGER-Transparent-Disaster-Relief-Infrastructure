@@ -1,0 +1,6 @@
+{
+  "name": "RELIEFLEDGER",
+  "description": "Offline-first disaster-relief aid tracking platform ensuring one household, one verifiable aid record.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
