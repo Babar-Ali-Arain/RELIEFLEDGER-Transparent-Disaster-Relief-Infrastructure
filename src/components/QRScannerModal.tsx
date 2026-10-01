@@ -1,122 +1,190 @@
-import React, { useState } from 'react';
-import { X, QrCode, Scan, Search, CheckCircle } from 'lucide-react';
-import { useRelief } from '../context/ReliefContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { Html5QrcodeScanner, Html5Qrcode } from 'html5-qrcode';
+import { X, Camera, QrCode, Upload, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onScanSuccess: (reliefId: string) => void;
+  onScanSuccess: (scannedText: string) => void;
+  title?: string;
 }
 
-export const QRScannerModal: React.FC<QRScannerModalProps> = ({ isOpen, onClose, onScanSuccess }) => {
-  const { households } = useRelief();
-  const [manualId, setManualId] = useState('');
-  const [isScanningSimulated, setIsScanningSimulated] = useState(false);
+export const QRScannerModal: React.FC<QRScannerModalProps> = ({
+  isOpen,
+  onClose,
+  onScanSuccess,
+  title = 'SCAN RELIEF CARD QR CODE'
+}) => {
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const [cameraActive, setCameraActive] = useState<boolean>(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const readerElementId = 'html5qr-code-full-region';
+
+  useEffect(() => {
+    let html5Qrcode: Html5Qrcode | null = null;
+
+    if (isOpen) {
+      setScannerError(null);
+      
+      // Initialize html5Qrcode scanner instance
+      try {
+        html5Qrcode = new Html5Qrcode(readerElementId);
+        scannerRef.current = html5Qrcode;
+
+        html5Qrcode.start(
+          { facingMode: 'environment' }, // Prefer back camera on mobile
+          {
+            fps: 10,
+            qrbox: { width: 220, height: 220 }
+          },
+          (decodedText) => {
+            // On QR code successfully scanned
+            if (decodedText) {
+              // Stop camera scanning
+              if (html5Qrcode && html5Qrcode.isScanning) {
+                html5Qrcode.stop().catch((err) => console.error('Error stopping scanner:', err));
+              }
+              onScanSuccess(decodedText);
+              onClose();
+            }
+          },
+          (errorMessage) => {
+            // Non-fatal parse errors while searching for QR frame
+          }
+        ).then(() => {
+          setCameraActive(true);
+        }).catch((err) => {
+          console.warn('Camera access prevented or unavailable:', err);
+          setScannerError('Camera access unavailable or permission denied. You can select a preset demo QR or upload an image.');
+          setCameraActive(false);
+        });
+      } catch (e) {
+        console.error('Error instantiating Html5Qrcode:', e);
+      }
+    }
+
+    return () => {
+      if (html5Qrcode && html5Qrcode.isScanning) {
+        html5Qrcode.stop().catch((err) => console.error('Error stopping scanner cleanup:', err));
+      }
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSelect = (id: string) => {
-    setIsScanningSimulated(true);
-    setTimeout(() => {
-      setIsScanningSimulated(false);
-      onScanSuccess(id);
-      onClose();
-    }, 600);
+  // Manual Demo QR Code preset triggers for instant testing without camera
+  const demoPresets = [
+    { label: 'Tariq Ahmed (Khairpur)', reliefId: 'RL-KHP-7F3A92' },
+    { label: 'Fatima Bibi (Khairpur)', reliefId: 'RL-KHP-1A82BD' },
+    { label: 'Hassan Raza (Sukkur)', reliefId: 'RL-SUK-77AB21' },
+    { label: 'Gul Hassan Khan (Sukkur)', reliefId: 'RL-SUK-91CD20' }
+  ];
+
+  const handleSimulatedScan = (reliefId: string) => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      scannerRef.current.stop().catch(() => {});
+    }
+    onScanSuccess(reliefId);
+    onClose();
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (manualId.trim()) {
-      onScanSuccess(manualId.trim().toUpperCase());
-      onClose();
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5Qrcode(readerElementId);
     }
+
+    scannerRef.current
+      .scanFile(file, true)
+      .then((decodedText) => {
+        onScanSuccess(decodedText);
+        onClose();
+      })
+      .catch((err) => {
+        setScannerError('Could not detect a valid Relief QR Code in the uploaded image.');
+      });
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-200 space-y-0">
+        
+        {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Scan className="w-5 h-5 text-emerald-400" />
-            <h3 className="font-bold text-sm tracking-wide">SCAN RELIEF QR CODE</h3>
+            <Camera className="w-5 h-5 text-emerald-400" />
+            <h3 className="font-extrabold text-sm tracking-wide">{title}</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().catch(() => {});
+              }
+              onClose();
+            }}
             className="text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Simulated Scanner Viewport Frame */}
-          <div className="relative aspect-4/3 bg-slate-950 rounded-xl overflow-hidden border-2 border-emerald-500/50 flex flex-col items-center justify-center p-4">
-            {/* Corner Bracket Overlays */}
-            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-emerald-400" />
-            <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-emerald-400" />
-            <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-emerald-400" />
-            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-emerald-400" />
+        {/* Camera Viewport Area */}
+        <div className="p-6 space-y-4">
+          <div className="relative bg-slate-950 rounded-2xl overflow-hidden min-h-[260px] flex flex-col items-center justify-center border-2 border-slate-800">
+            {/* Camera Viewport Canvas element target */}
+            <div id={readerElementId} className="w-full h-full text-white" />
 
-            {/* Laser Line Animation */}
-            <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_12px_#34d399] animate-bounce my-auto" />
-
-            <div className="text-center z-10 bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-white text-xs">
-              {isScanningSimulated ? (
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                  <CheckCircle className="w-4 h-4 animate-pulse" />
-                  <span>QR Code Detected! Processing...</span>
-                </div>
-              ) : (
-                <span>Position Household QR Code within viewfinder or select demo card below</span>
-              )}
-            </div>
+            {scannerError && (
+              <div className="p-6 text-center space-y-3 z-10">
+                <AlertCircle className="w-10 h-10 text-amber-400 mx-auto" />
+                <p className="text-xs text-slate-300 font-medium max-w-xs mx-auto leading-relaxed">
+                  {scannerError}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Quick Tap Demo Household IDs */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Quick Scan Demo Households:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {households.slice(0, 4).map((h) => (
+          {/* Fallback File Upload & Demo Selectors */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                Or Select Preset Demo Relief ID:
+              </span>
+              <label className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer flex items-center gap-1">
+                <Upload className="w-3.5 h-3.5" /> Upload QR Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {demoPresets.map((preset) => (
                 <button
-                  key={h.id}
-                  onClick={() => handleSelect(h.reliefId)}
-                  className="p-2.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-lg text-left transition-colors group"
+                  key={preset.reliefId}
+                  onClick={() => handleSimulatedScan(preset.reliefId)}
+                  className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-medium text-slate-800 text-left transition-colors flex items-center justify-between"
                 >
-                  <div className="font-mono text-xs font-bold text-slate-900 group-hover:text-emerald-700">
-                    {h.reliefId}
-                  </div>
-                  <div className="text-[11px] text-slate-500 truncate">
-                    {h.representativeName}
-                  </div>
+                  <span className="truncate font-bold text-[11px]">{preset.label}</span>
+                  <span className="font-mono text-[10px] text-emerald-700 font-extrabold">{preset.reliefId}</span>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Manual Entry Fallback */}
-          <form onSubmit={handleManualSubmit} className="pt-2 border-t border-slate-100">
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Manual Relief ID Entry
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g. RL-KHP-7F3A92"
-                value={manualId}
-                onChange={(e) => setManualId(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono font-semibold uppercase focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg transition-colors"
-              >
-                Find
-              </button>
-            </div>
-          </form>
         </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 text-center">
+          <span className="text-[11px] text-slate-500 font-medium">
+            Point camera at the QR code printed on the beneficiary's Relief Card
+          </span>
+        </div>
+
       </div>
     </div>
   );
